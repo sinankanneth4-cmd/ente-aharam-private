@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ente Aharam — Daily Food Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --leaf-deep:#2F4A2E;
+    --leaf:#5B7F4A;
+    --leaf-light:#8FAE73;
+    --cream:#FBF6EA;
+    --turmeric:#E3A008;
+    --rust:#B5482E;
+    --ink:#2B2620;
+    --gold-light:#F4E3B2;
+    --paper:#FFFDF7;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:0 20px;}
+
+  header{
+    background:var(--leaf-deep);
+    color:var(--cream);
+    padding:36px 20px 32px;
+    position:relative;
+    overflow:hidden;
+  }
+  header .wrap{position:relative; z-index:2;}
+  header .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:8px;
+  }
+  header h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:38px;
+    line-height:1.05;
+  }
+  header p{
+    margin-top:10px;
+    font-size:14.5px;
+    color:#DCE7D2;
+    max-width:46ch;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    right:-60px; top:-60px;
+    width:220px; height:220px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(227,160,8,0.18), transparent 70%);
+  }
+
+  /* Banana leaf plate — the signature element */
+  .plate-section{
+    background:var(--leaf-deep);
+    padding:0 20px 40px;
+  }
+  .plate{
+    background:linear-gradient(135deg, #3C5C39, #24391F 70%);
+    border-radius:50% / 38%;
+    border:3px solid rgba(251,246,234,0.15);
+    padding:34px 26px;
+    position:relative;
+    min-height:210px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .plate-veins{
+    position:absolute; inset:0;
+    border-radius:inherit;
+    background:
+      repeating-linear-gradient(100deg, transparent 0 22px, rgba(251,246,234,0.035) 22px 23px);
+    pointer-events:none;
+  }
+  .mounds{
+    display:flex;
+    gap:18px;
+    align-items:flex-end;
+    width:100%;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .mound{
+    display:flex; flex-direction:column; align-items:center;
+    gap:8px;
+  }
+  .mound .blob{
+    width:64px; height:64px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px; font-weight:600;
+    color:var(--leaf-deep);
+    transition:width 0.4s ease, height 0.4s ease, transform 0.3s ease;
+    box-shadow:0 4px 10px rgba(0,0,0,0.25) inset, 0 3px 6px rgba(0,0,0,0.3);
+  }
+  .mound.rice .blob{ background:#FBF6EA; }
+  .mound.protein .blob{ background:var(--rust); color:var(--cream); }
+  .mound.veg .blob{ background:var(--turmeric); }
+  .mound .label{
+    font-size:11px;
+    color:var(--gold-light);
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.05em;
+  }
+
+  .targets-strip{
+    display:flex;
+    gap:10px;
+    margin-top:26px;
+    flex-wrap:wrap;
+  }
+  .target-pill{
+    flex:1;
+    min-width:130px;
+    background:rgba(251,246,234,0.07);
+    border:1px solid rgba(251,246,234,0.15);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .target-pill .num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:19px;
+    font-weight:600;
+    color:var(--cream);
+  }
+  .target-pill .num span{font-size:12px; color:var(--leaf-light); font-weight:500;}
+  .target-pill .lbl{font-size:11px; color:#B8C9AC; margin-top:2px; text-transform:uppercase; letter-spacing:0.06em;}
+  .bar-track{
+    width:100%; height:5px; border-radius:3px;
+    background:rgba(251,246,234,0.12);
+    margin-top:8px; overflow:hidden;
+  }
+  .bar-fill{height:100%; border-radius:3px; background:var(--turmeric); transition:width 0.4s ease;}
+
+  /* Picker */
+  main{padding-top:30px;}
+  .section-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:22px;
+    margin-bottom:4px;
+  }
+  .section-sub{font-size:13px; color:#6b6255; margin-bottom:16px;}
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:9px 16px;
+    border-radius:999px;
+    border:1.5px solid var(--leaf-deep);
+    background:transparent;
+    color:var(--leaf-deep);
+    cursor:pointer;
+    transition:all 0.2s ease;
+  }
+  .tab.active{background:var(--leaf-deep); color:var(--cream);}
+
+  .picker-card{
+    background:var(--paper);
+    border:1px solid #E4DBC4;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:26px;
+  }
+  .field-row{display:flex; gap:12px; margin-bottom:14px;}
+  select, input[type=number]{
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    padding:11px 12px;
+    border-radius:10px;
+    border:1.5px solid #DCD2B8;
+    background:#fff;
+    color:var(--ink);
+  }
+  select{flex:1;}
+  input[type=number]{width:90px; text-align:center; font-family:'IBM Plex Mono', monospace;}
+  select:focus, input:focus{outline:2px solid var(--turmeric); outline-offset:1px;}
+
+  .serving-note{
+    font-size:12.5px;
+    color:#7a7060;
+    font-family:'IBM Plex Mono', monospace;
+    margin-bottom:14px;
+  }
+
+  .preview-macros{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .macro-box{
+    background:var(--gold-light);
+    border-radius:10px;
+    padding:10px 6px;
+    text-align:center;
+  }
+  .macro-box .v{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:16px; color:var(--leaf-deep);}
+  .macro-box .k{font-size:10.5px; color:#6b6255; text-transform:uppercase; letter-spacing:0.04em; margin-top:2px;}
+
+  button.add-btn{
+    width:100%;
+    background:var(--rust);
+    color:var(--cream);
+    border:none;
+    padding:13px;
+    border-radius:10px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background 0.2s ease, transform 0.1s ease;
+  }
+  button.add-btn:hover{background:#9c3c24;}
+  button.add-btn:active{transform:scale(0.98);}
+
+  .log-list{list-style:none;}
+  .log-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--paper);
+    border:1px solid #E4DBC4;
+    border-radius:12px;
+    padding:13px 16px;
+    margin-bottom:8px;
+  }
+  .log-item .info{font-size:14px;}
+  .log-item .info .name{font-weight:600;}
+  .log-item .info .sub{font-size:12px; color:#7a7060; font-family:'IBM Plex Mono', monospace; margin-top:2px;}
+  .log-item .cal{font-family:'IBM Plex Mono', monospace; font-weight:600; color:var(--rust); margin-right:12px;}
+  .remove-btn{
+    background:none; border:none; color:#9c8f77; font-size:18px; cursor:pointer; line-height:1;
+    padding:4px 6px;
+  }
+  .remove-btn:hover{color:var(--rust);}
+  .empty-state{
+    text-align:center;
+    padding:30px 20px;
+    color:#8a8069;
+    font-size:14px;
+    background:var(--paper);
+    border:1.5px dashed #DCD2B8;
+    border-radius:14px;
+  }
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:#8a8069;
+    padding:30px 20px 10px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Malappuram · Home Kitchen</div>
+    <h1>Ente Aharam</h1>
+    <p>A daily food log for a 17-year-old, 148cm, 47.5kg — chicken, egg &amp; fish, no red meat, no dosa. Built to hold steady, not to cut down.</p>
+  </div>
+</header>
+
+<div class="plate-section">
+  <div class="wrap">
+    <div class="plate">
+      <div class="plate-veins"></div>
+      <div class="mounds" id="mounds">
+        <div class="mound rice"><div class="blob" id="blob-carb">0g</div><div class="label">CARB</div></div>
+        <div class="mound protein"><div class="blob" id="blob-protein">0g</div><div class="label">PROTEIN</div></div>
+        <div class="mound veg"><div class="blob" id="blob-fat">0g</div><div class="label">FAT</div></div>
+      </div>
+    </div>
+
+    <div class="targets-strip">
+      <div class="target-pill">
+        <div class="num" id="t-cal">0<span> / 1750</span></div>
+        <div class="lbl">Calories</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-cal" style="width:0%"></div></div>
+      </div>
+      <div class="target-pill">
+        <div class="num" id="t-protein">0<span> / 80g</span></div>
+        <div class="lbl">Protein</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-protein" style="width:0%"></div></div>
+      </div>
+      <div class="target-pill">
+        <div class="num" id="t-carb">0<span> / 230g</span></div>
+        <div class="lbl">Carbs</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-carb" style="width:0%"></div></div>
+      </div>
+      <div class="target-pill">
+        <div class="num" id="t-fat">0<span> / 55g</span></div>
+        <div class="lbl">Fat</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-fat" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="section-title">Log a food</div>
+  <div class="section-sub">Pick a meal, choose what she's eating, adjust the amount if needed.</div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="picker-card">
+    <div class="field-row">
+      <select id="foodSelect"></select>
+      <input type="number" id="qty" value="1" step="0.5" min="0.5">
+    </div>
+    <div class="serving-note" id="servingNote">1 serving = —</div>
+
+    <div class="preview-macros">
+      <div class="macro-box"><div class="v" id="p-cal">0</div><div class="k">kcal</div></div>
+      <div class="macro-box"><div class="v" id="p-protein">0g</div><div class="k">protein</div></div>
+      <div class="macro-box"><div class="v" id="p-carb">0g</div><div class="k">carbs</div></div>
+      <div class="macro-box"><div class="v" id="p-fat">0g</div><div class="k">fat</div></div>
+    </div>
+
+    <button class="add-btn" id="addBtn">Add to today's log</button>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div class="section-title">Today's log</div>
+      <div class="section-sub" id="dateNote">Everything logged so far, most recent first.</div>
+    </div>
+    <button id="resetBtn" style="background:none; border:1.5px solid #DCD2B8; color:#7a7060; font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:8px 12px; border-radius:8px; cursor:pointer; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:14px;">Clear today</button>
+  </div>
+  <div id="syncNote" style="font-size:12px; color:#8a8069; font-family:'IBM Plex Mono',monospace; margin-bottom:12px;">Loading saved log…</div>
+  <ul class="log-list" id="logList"></ul>
+  <div class="empty-state" id="emptyState">Nothing logged yet — add her first meal above.</div>
+</main>
+
+<footer>Targets based on maintenance needs for her height, weight and age · rough estimates, not medical advice</footer>
+
+<script>
+const FOODS = {
+  Breakfast: [
+    {name:"Puttu", serving:"1 cup (100g)", cal:130, protein:2.5, carb:28, fat:0.5},
+    {name:"Kadala curry (black chana)", serving:"½ cup (100g)", cal:150, protein:7, carb:20, fat:5},
+    {name:"Idiyappam", serving:"4 strings (100g)", cal:150, protein:3, carb:32, fat:1},
+    {name:"Appam", serving:"2 pieces", cal:240, protein:4, carb:45, fat:4},
+    {name:"Pathiri", serving:"2 pieces", cal:200, protein:4, carb:42, fat:1},
+    {name:"Boiled egg", serving:"1 egg", cal:78, protein:6, carb:0.6, fat:5},
+    {name:"Egg roast", serving:"1 egg", cal:90, protein:6, carb:2, fat:7},
+    {name:"Kerala fish fry", serving:"100g", cal:200, protein:20, carb:5, fat:12},
+    {name:"Chicken curry", serving:"100g", cal:190, protein:18, carb:5, fat:11},
+  ],
+  Lunch: [
+    {name:"Matta rice, cooked", serving:"1 cup (150g)", cal:190, protein:4, carb:42, fat:0.5},
+    {name:"Fish curry (meen curry)", serving:"100g", cal:150, protein:18, carb:4, fat:7},
+    {name:"Meen peera (fish w/ coconut)", serving:"100g", cal:180, protein:17, carb:4, fat:10},
+    {name:"Chicken curry", serving:"100g", cal:190, protein:18, carb:5, fat:11},
+    {name:"Thoran (veg + coconut)", serving:"100g", cal:90, protein:2, carb:8, fat:6},
+    {name:"Sambar", serving:"1 cup", cal:120, protein:6, carb:18, fat:3},
+    {name:"Pulissery (yogurt curry)", serving:"1 cup", cal:100, protein:4, carb:10, fat:5},
+    {name:"Rasam", serving:"1 cup", cal:50, protein:2, carb:8, fat:1},
+    {name:"Papadam", serving:"1 piece", cal:35, protein:1, carb:6, fat:1},
+  ],
+  Dinner: [
+    {name:"Chapati", serving:"1 piece (40g)", cal:120, protein:3, carb:20, fat:3},
+    {name:"Pathiri", serving:"2 pieces", cal:200, protein:4, carb:42, fat:1},
+    {name:"Egg curry", serving:"1 egg", cal:110, protein:6, carb:4, fat:8},
+    {name:"Fish curry", serving:"100g", cal:150, protein:18, carb:4, fat:7},
+    {name:"Chicken stew", serving:"100g", cal:160, protein:14, carb:6, fat:9},
+    {name:"Vegetable stew", serving:"100g", cal:90, protein:2, carb:8, fat:6},
+  ],
+  Snacks: [
+    {name:"Banana", serving:"1 medium", cal:105, protein:1.3, carb:27, fat:0.4},
+    {name:"Buttermilk", serving:"1 glass (200ml)", cal:40, protein:2, carb:4, fat:1},
+    {name:"Mixed nuts", serving:"10g", cal:60, protein:2, carb:2, fat:5},
+  ]
+};
+
+const TARGETS = {cal:1750, protein:80, carb:230, fat:55};
+
+let activeMeal = "Breakfast";
+let log = [];
+let storageReady = false;
+
+function todayKey(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function todayLabel(){
+  return new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'});
+}
+
+async function saveLog(){
+  if(!storageReady) return;
+  try{
+    await window.storage.set('log:' + todayKey(), JSON.stringify(log), false);
+  }catch(err){
+    console.error('Could not save log', err);
+    document.getElementById('syncNote').textContent = "Couldn't save — changes may not persist.";
+  }
+}
+
+async function loadLog(){
+  const syncNote = document.getElementById('syncNote');
+  try{
+    const result = await window.storage.get('log:' + todayKey(), false);
+    log = result && result.value ? JSON.parse(result.value) : [];
+  }catch(err){
+    // no saved log for today yet, or storage unavailable
+    log = [];
+  }
+  storageReady = true;
+  syncNote.textContent = `Saved on this device · ${todayLabel()}`;
+  renderLog();
+}
+
+async function clearToday(){
+  log = [];
+  renderLog();
+  await saveLog();
+}
+
+const tabsEl = document.getElementById('tabs');
+const foodSelect = document.getElementById('foodSelect');
+const qtyInput = document.getElementById('qty');
+const servingNote = document.getElementById('servingNote');
+const logList = document.getElementById('logList');
+const emptyState = document.getElementById('emptyState');
+
+function buildTabs(){
+  tabsEl.innerHTML = '';
+  Object.keys(FOODS).forEach(meal => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (meal === activeMeal ? ' active' : '');
+    btn.textContent = meal;
+    btn.onclick = () => { activeMeal = meal; buildTabs(); buildFoodSelect(); };
+    tabsEl.appendChild(btn);
+  });
+}
+
+function buildFoodSelect(){
+  foodSelect.innerHTML = '';
+  FOODS[activeMeal].forEach((food, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = food.name;
+    foodSelect.appendChild(opt);
+  });
+  updatePreview();
+}
+
+function currentFood(){
+  return FOODS[activeMeal][foodSelect.value];
+}
+
+function updatePreview(){
+  const food = currentFood();
+  const qty = parseFloat(qtyInput.value) || 0;
+  servingNote.textContent = "1 serving = " + food.serving;
+  document.getElementById('p-cal').textContent = Math.round(food.cal * qty);
+  document.getElementById('p-protein').textContent = round1(food.protein * qty) + "g";
+  document.getElementById('p-carb').textContent = round1(food.carb * qty) + "g";
+  document.getElementById('p-fat').textContent = round1(food.fat * qty) + "g";
+}
+
+function round1(n){ return Math.round(n * 10) / 10; }
+
+function addToLog(){
+  const food = currentFood();
+  const qty = parseFloat(qtyInput.value) || 0;
+  if(qty <= 0) return;
+  log.unshift({
+    meal: activeMeal,
+    name: food.name,
+    qty: qty,
+    serving: food.serving,
+    cal: food.cal * qty,
+    protein: food.protein * qty,
+    carb: food.carb * qty,
+    fat: food.fat * qty,
+    id: Date.now() + Math.random()
+  });
+  renderLog();
+  saveLog();
+}
+
+function removeFromLog(id){
+  log = log.filter(item => item.id !== id);
+  renderLog();
+  saveLog();
+}
+
+function renderLog(){
+  logList.innerHTML = '';
+  emptyState.style.display = log.length === 0 ? 'block' : 'none';
+
+  log.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'log-item';
+    li.innerHTML = `
+      <div class="info">
+        <div class="name">${item.name} <span style="color:#9c8f77; font-weight:400; font-size:12px;">· ${item.meal}</span></div>
+        <div class="sub">${item.qty}× ${item.serving}</div>
+      </div>
+      <div style="display:flex; align-items:center;">
+        <div class="cal">${Math.round(item.cal)} kcal</div>
+        <button class="remove-btn" data-id="${item.id}" aria-label="Remove">✕</button>
+      </div>
+    `;
+    li.querySelector('.remove-btn').onclick = () => removeFromLog(item.id);
+    logList.appendChild(li);
+  });
+
+  updateTotals();
+}
+
+function updateTotals(){
+  const totals = log.reduce((acc, item) => {
+    acc.cal += item.cal; acc.protein += item.protein;
+    acc.carb += item.carb; acc.fat += item.fat;
+    return acc;
+  }, {cal:0, protein:0, carb:0, fat:0});
+
+  document.getElementById('t-cal').innerHTML = Math.round(totals.cal) + '<span> / ' + TARGETS.cal + '</span>';
+  document.getElementById('t-protein').innerHTML = Math.round(totals.protein) + '<span> / ' + TARGETS.protein + 'g</span>';
+  document.getElementById('t-carb').innerHTML = Math.round(totals.carb) + '<span> / ' + TARGETS.carb + 'g</span>';
+  document.getElementById('t-fat').innerHTML = Math.round(totals.fat) + '<span> / ' + TARGETS.fat + 'g</span>';
+
+  document.getElementById('bar-cal').style.width = Math.min(100, totals.cal / TARGETS.cal * 100) + '%';
+  document.getElementById('bar-protein').style.width = Math.min(100, totals.protein / TARGETS.protein * 100) + '%';
+  document.getElementById('bar-carb').style.width = Math.min(100, totals.carb / TARGETS.carb * 100) + '%';
+  document.getElementById('bar-fat').style.width = Math.min(100, totals.fat / TARGETS.fat * 100) + '%';
+
+  // banana leaf plate mounds — sized by share of target reached, capped
+  const carbBlob = document.getElementById('blob-carb');
+  const proteinBlob = document.getElementById('blob-protein');
+  const fatBlob = document.getElementById('blob-fat');
+
+  sizeBlob(carbBlob, totals.carb, TARGETS.carb, Math.round(totals.carb) + 'g');
+  sizeBlob(proteinBlob, totals.protein, TARGETS.protein, Math.round(totals.protein) + 'g');
+  sizeBlob(fatBlob, totals.fat, TARGETS.fat, Math.round(totals.fat) + 'g');
+}
+
+function sizeBlob(el, value, target, label){
+  const ratio = Math.min(1.5, value / target);
+  const size = 46 + ratio * 46; // 46px to 115px
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  el.style.fontSize = size < 60 ? '11px' : '13px';
+  el.textContent = label;
+}
+
+foodSelect.addEventListener('change', updatePreview);
+qtyInput.addEventListener('input', updatePreview);
+document.getElementById('addBtn').addEventListener('click', addToLog);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if(confirm("Clear everything logged today?")) clearToday();
+});
+
+buildTabs();
+buildFoodSelect();
+loadLog();
+</script>
+
+</body>
+</html>
